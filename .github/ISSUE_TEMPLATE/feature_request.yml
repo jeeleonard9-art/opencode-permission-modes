@@ -1,0 +1,66 @@
+name: Feature request
+description: 新的档位、新的权限规则，或者对现有行为的改进建议
+title: "[feat] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        先说明这个仓库的边界，能省掉一些注定被拒的提案：
+
+        - **纯配置**：只通过 agent 的 `permission` 字段实现，不引入插件、hook 或任何运行时依赖。
+        - **不改现有三档语义**：新增能力以新档位或 `presets/` 片段的形式加，不动 `read-only` / `auto-edit` / `full-auto` 的定义。
+        - 只影响桌面版 UI 的需求（比如给档位加图标）大概率做不了，因为配置层够不到。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你遇到的实际问题
+      description: 描述场景，不要直接跳到方案。比如「做批量重构时 full-auto 太野，auto-edit 又每条命令都要点」。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你希望的方案
+      description: 如果是一个新档位，请写出它的 permission 草案；如果是命令规则，写出要匹配的 glob。
+      render: yaml
+      placeholder: |
+        permission:
+          "*": allow
+          bash:
+            "*": allow
+            "docker *": ask
+            "git push*": ask
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 你试过/考虑过的替代方案
+      description: '比如用 `"*": ask` 再逐条放开，或者干脆不装本仓库'
+    validations:
+      required: false
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 影响范围
+      options:
+        - 新增一个档位
+        - 修改某一档的现有规则（可能影响向后兼容）
+        - 仅文档
+        - 安装/卸载脚本
+        - 不确定
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 你愿意自己实现吗
+      options:
+        - label: 愿意提 PR（我会先看 CONTRIBUTING.md）
+          required: false

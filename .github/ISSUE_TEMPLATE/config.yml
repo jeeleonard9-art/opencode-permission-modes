@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 使用问题 / 想讨论方案
+    url: https://github.com/jeeleonard9-art/opencode-permission-modes/discussions
+    about: 不会装、不确定该用哪一档、想聊聊思路，去 Discussions，不要开 issue
+  - name: OpenCode 本身的问题
+    url: https://github.com/anomalyco/opencode/issues
+    about: 如果去掉本仓库的配置依然能复现，那是 OpenCode 上游的问题

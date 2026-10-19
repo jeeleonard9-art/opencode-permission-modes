@@ -170,9 +170,12 @@ The full matrix (version × platform × form), version-sensitive details and a s
 - `read-only` denies `task`, so it cannot spawn subagents. That is deliberate: a subagent brings its own permission set and is an easy way to escape the restriction.
 - This is a *policy*, not a sandbox. `full-auto` with `bash: allow` means the agent can run anything. Only use it in an environment you trust.
 
-## Contributing
+## Feedback and maintenance
 
-Issues and PRs are welcome. If you verify this on another OpenCode version, or come up with a nicer split, please share it.
+- **Found a bug**: use the [issue forms](https://github.com/jeeleonard9-art/opencode-permission-modes/issues/new/choose). They ask for your OpenCode version, OS, form factor and reproduction steps — missing one of those usually costs a round-trip.
+- **Usage questions, ideas**: go to [Discussions](https://github.com/jeeleonard9-art/opencode-permission-modes/discussions) instead of the issue tracker.
+- **Want to change something**: read [CONTRIBUTING.md](CONTRIBUTING.md) first; it spells out what this repo accepts and what it rejects.
+- **Cadence**: this tracks changes to OpenCode's `permission` schema; every release is recorded in [CHANGELOG.md](CHANGELOG.md), tagged, and its verification status is kept in [compatibility.md](docs/compatibility.md).
 
 CI guards every change: `scripts/validate_config.py` (standard library only) checks the `permission` keys and values, that `examples/opencode.jsonc` parses, and that relative links in this README resolve; CI then re-parses the frontmatter with a real YAML parser and runs the install/uninstall round-trip. Run the same check locally:
 

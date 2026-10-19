@@ -1,0 +1,121 @@
+name: Bug report
+description: 某一档没有按文档描述工作（权限不对、档位不出现、脚本报错等）
+title: "[bug] "
+labels: ["bug", "needs-info"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提 issue 前请先花一分钟确认这几件事，能省掉一整轮来回：
+
+        - 你的版本/平台是否在 [兼容性矩阵](https://github.com/jeeleonard9-art/opencode-permission-modes/blob/main/docs/compatibility.md) 的「已验证」之外？
+        - 快捷键、输入法、重启相关的问题，多半在 [FAQ](https://github.com/jeeleonard9-art/opencode-permission-modes/blob/main/docs/faq.md) 里已经有答案。
+        - **新增/删除档位后必须重启** OpenCode，否则选择器里不会出现。
+        - 如果去掉本仓库的配置也能复现，那大概率是 OpenCode 本身的问题，请报给 [上游](https://github.com/anomalyco/opencode/issues)。
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我读过 docs/faq.md 和 docs/compatibility.md
+          required: true
+        - label: 我已经重启过 OpenCode（新增/删除档位后必须重启）
+          required: true
+        - label: 这个问题不是去掉本仓库配置后依然存在的 OpenCode 上游问题
+          required: true
+
+  - type: input
+    id: opencode-version
+    attributes:
+      label: OpenCode 版本
+      description: 桌面版在「设置 → 关于」里可以看到；TUI 用 `opencode --version`
+      placeholder: "例如 1.19.3"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - 其他（请在复现步骤里注明）
+    validations:
+      required: true
+
+  - type: dropdown
+    id: form-factor
+    attributes:
+      label: 形态
+      options:
+        - Desktop（桌面版）
+        - TUI
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: 出问题的档位
+      options:
+        - read-only
+        - auto-edit
+        - full-auto
+        - hardened-full-auto（presets）
+        - 不是某一档的问题（安装/卸载/文档）
+        - 不确定
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为 vs 预期行为
+      description: 你以为会怎样、实际怎样。权限问题请写清楚是「被拒绝」「没弹确认」还是「弹了确认但点了没用」。
+      placeholder: |
+        预期：切到 read-only 后 edit 工具应该不可用
+        实际：仍然能改文件，而且没有弹确认
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 把 agent/*.md 复制到 ~/.config/opencode/agent/
+        2. 重启，切到 read-only
+        3. 让 agent 修改 README.md
+        4. 看到 ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: 相关配置
+      description: 出问题那一档的 frontmatter，或 opencode.json 里的相关片段。**请先删掉 API key 等敏感信息。**
+      render: yaml
+    validations:
+      required: false
+
+  - type: textarea
+    id: validate-output
+    attributes:
+      label: 本地校验输出
+      description: 在仓库目录运行 `python scripts/validate_config.py`，把结果贴在这里
+      render: shell
+      placeholder: "OK: 3 agent file(s), 1 preset(s), 1 example config, 2 README(s) checked, 0 warning(s)."
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 截图 / 日志 / 其他线索
+      description: 直接拖图片进来即可；日志请去掉密钥
+    validations:
+      required: false

@@ -170,9 +170,12 @@ powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
 - `read-only` 档禁止 `task`，因此它不能派生子代理；这是刻意的——子代理会继承另一套权限，容易绕过限制。
 - 这是一个「策略」而不是「沙箱」：`full-auto` 档的 `bash: allow` 意味着 agent 能执行任意命令。请只在你信任的环境里使用。
 
-## 贡献
+## 反馈与维护
 
-欢迎提 issue 和 PR。如果你在自己的机器上验证了其他 OpenCode 版本，或者做出了更好用的档位划分，欢迎分享。
+- **遇到 bug**：走 [issue 模板](https://github.com/jeeleonard9-art/opencode-permission-modes/issues/new/choose)。模板会要求填 OpenCode 版本、系统、形态和复现步骤——缺一样基本就得多来回一轮。
+- **用法问题、想法讨论**：去 [Discussions](https://github.com/jeeleonard9-art/opencode-permission-modes/discussions)，别占 issue 区。
+- **想自己改**：先看 [CONTRIBUTING.md](CONTRIBUTING.md)，里面写明这个仓库接受什么、拒绝什么。
+- **维护节奏**：跟随 OpenCode 的 `permission` schema 变化更新；每次发版记录在 [CHANGELOG.md](CHANGELOG.md) 并打 tag，验证状态记在 [compatibility.md](docs/compatibility.md)。
 
 改完的配置由 CI 把关：`scripts/validate_config.py`（只用标准库）校验 `permission` 的键与值、`examples/opencode.jsonc` 的可解析性、README 里的相对链接；CI 里还会用真正的 YAML 解析器复查一遍 frontmatter，并跑安装/卸载往返测试。本地也能直接跑：
 
