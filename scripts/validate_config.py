@@ -29,6 +29,7 @@ AGENT_DIR = ROOT / "agent"
 PRESET_DIR = ROOT / "presets"
 EXAMPLE_CONFIG = ROOT / "examples" / "opencode.jsonc"
 READMES = (ROOT / "README.md", ROOT / "README_EN.md")
+EXTRA_DOCS = (ROOT / "CONTRIBUTING.md",)
 
 ACTIONS = {"allow", "ask", "deny"}
 
@@ -462,6 +463,10 @@ def main() -> int:
             fail(readme, "README is missing")
             continue
         link_sets[readme.name] = check_readme_links(readme)
+
+    for doc in EXTRA_DOCS:
+        if doc.is_file():
+            check_readme_links(doc)
     if len(link_sets) == 2:
         # The language switcher at the top points at the other README, so drop
         # those two targets before comparing.
