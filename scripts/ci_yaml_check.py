@@ -83,6 +83,13 @@ def check_github_yaml() -> tuple[int, int]:
                 problems.append("missing or empty 'name'")
             if not isinstance(data.get("description"), str) or not data.get("description"):
                 problems.append("missing or empty 'description'")
+            if "labels" in data and (
+                not isinstance(data["labels"], list)
+                or not all(isinstance(x, str) for x in data["labels"])
+            ):
+                problems.append("'labels' must be a list of strings")
+
+            seen_ids = set()
             body = data.get("body")
             if not isinstance(body, list) or not body:
                 problems.append("'body' must be a non-empty list")
@@ -91,18 +98,67 @@ def check_github_yaml() -> tuple[int, int]:
                     if not isinstance(item, dict):
                         problems.append(f"body[{index}] is not a mapping")
                         continue
-                    if item.get("type") not in FORM_TYPES:
-                        problems.append(f"body[{index}].type is invalid: {item.get('type')!r}")
-                    if item.get("type") != "markdown" and not item.get("id"):
+                    item_type = item.get("type")
+                    if item_type not in FORM_TYPES:
+                        problems.append(f"body[{index}].type is invalid: {item_type!r}")
+                        continue
+                    if item_type == "markdown":
+                        continue
+                    item_id = item.get("id")
+                    if not isinstance(item_id, str) or not item_id:
                         problems.append(f"body[{index}] is missing 'id'")
+                    elif item_id in seen_ids:
+                        problems.append(f"body[{index}] duplicates id {item_id!r}")
+                    else:
+                        seen_ids.add(item_id)
+
+                    attributes = item.get("attributes")
+                    if not isinstance(attributes, dict) or not isinstance(attributes.get("label"), str):
+                        problems.append(f"body[{index}] is missing attributes.label")
+                        attributes = {}
+
+                    validations = item.get("validations")
+                    if validations is not None and (
+                        not isinstance(validations, dict)
+                        or not isinstance(validations.get("required", False), bool)
+                    ):
+                        problems.append(f"body[{index}].validations must be a mapping with boolean 'required'")
+
+                    if item_type == "dropdown":
+                        options = attributes.get("options")
+                        if not isinstance(options, list) or not options:
+                            problems.append(f"body[{index}] dropdown needs a non-empty 'options' list")
+                        elif not all(isinstance(x, str) for x in options):
+                            problems.append(f"body[{index}] dropdown options must be strings")
+
+                    if item_type == "checkboxes":
+                        options = attributes.get("options")
+                        if not isinstance(options, list) or not options:
+                            problems.append(f"body[{index}] checkboxes need a non-empty 'options' list")
+                        else:
+                            for j, option in enumerate(options):
+                                if not isinstance(option, dict) or not isinstance(option.get("label"), str):
+                                    problems.append(f"body[{index}].options[{j}] needs a 'label'")
             if problems:
                 for problem in problems:
                     print(f"FAIL {rel}: {problem}")
                 failures += 1
                 continue
         elif path.name == "config.yml" and path.parent.name == "ISSUE_TEMPLATE":
+            problems = []
             if not isinstance(data.get("blank_issues_enabled"), bool):
-                print(f"FAIL {rel}: 'blank_issues_enabled' must be true or false")
+                problems.append("'blank_issues_enabled' must be true or false")
+            links = data.get("contact_links")
+            if not isinstance(links, list):
+                problems.append("'contact_links' must be a list")
+            else:
+                for index, link in enumerate(links):
+                    for key in ("name", "url", "about"):
+                        if not isinstance(link, dict) or not isinstance(link.get(key), str):
+                            problems.append(f"contact_links[{index}] needs a string '{key}'")
+            if problems:
+                for problem in problems:
+                    print(f"FAIL {rel}: {problem}")
                 failures += 1
                 continue
 
