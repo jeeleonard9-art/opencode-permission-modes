@@ -1,0 +1,19 @@
+// 放进 ~/.config/opencode/opencode.jsonc
+// Windows 路径：C:\Users\<你>\.config\opencode\opencode.jsonc
+//
+// 这个文件是可选的：三档 agent 只要放进 agent/ 目录就能用。
+// 这里的两个设置让体验更顺：
+//   1. default_agent  —— 新会话默认进哪一档
+//   2. agent.*.disable —— 隐藏内置的 build / plan，列表里只留三档
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // 新会话默认进入 auto-edit（改文件自由，跑命令要确认）
+  "default_agent": "auto-edit",
+
+  // 隐藏内置 agent。想保留 plan 就把这一行删掉
+  "agent": {
+    "build": { "disable": true },
+    "plan": { "disable": true }
+  }
+}
