@@ -2,6 +2,7 @@
 
 > 给 [OpenCode](https://opencode.ai) 加上 Codex 风格的三档权限：**read-only / auto-edit / full-auto**。一键切换，零运行时开销。
 
+[![validate](https://github.com/jeeleonard9-art/opencode-permission-modes/actions/workflows/validate.yml/badge.svg)](https://github.com/jeeleonard9-art/opencode-permission-modes/actions/workflows/validate.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![opencode](https://img.shields.io/badge/OpenCode-1.19.3-000000)](https://opencode.ai)
 [![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
@@ -73,7 +74,21 @@ cd opencode-permission-modes
 chmod +x install.sh && ./install.sh
 ```
 
-脚本只做两件事：把 `agent/*.md` 复制到配置目录（已存在则先备份成 `.bak`）；如果配置目录里还没有配置文件，就放一份示例进去。它**不会覆盖**你已有的 `opencode.json`。
+脚本只做两件事：把 `agent/*.md` 复制到配置目录（内容不同的先备份成 `.bak`，完全相同就跳过）；如果配置目录里还没有配置文件，就放一份示例进去。它**不会覆盖**你已有的 `opencode.json`。同时会在配置目录写一个 `.opencode-permission-modes.manifest`，记录装了什么、备份是哪个——卸载脚本靠它还原。
+
+### 卸载
+
+```powershell
+# Windows
+powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
+```
+
+```bash
+# macOS / Linux
+./uninstall.sh --yes
+```
+
+会把三个 `.md` 还原成安装前的样子（没备份过就直接删掉），`opencode.json` 一律不碰；如果 `default_agent` 还指向已删掉的档位，它会给出提示。
 
 ### 手动安装
 
@@ -120,6 +135,18 @@ chmod +x install.sh && ./install.sh
 
 **给某一档换模型**：在该 `.md` 的 frontmatter 里加 `model: provider/model-id`。
 
+**加固 `full-auto`**：`full-auto` 的 `bash: allow` 意味着什么都能跑。如果想要「其余全放行，但危险命令直接禁用」，把 [`presets/hardened-full-auto.md`](presets/hardened-full-auto.md) 复制进配置目录的 `agent/`（它就会多出一个 `hardened-full-auto` 档），或用它替换 `agent/full-auto.md`。它禁用这几类：
+
+```yaml
+    "git push --force*": deny
+    "git push -f*": deny
+    "rm -rf*": deny
+    "git reset --hard*": deny
+    "git clean -f*": deny
+```
+
+> 注意这是**命令字符串的 glob 匹配**，不是沙箱。`sudo rm -rf`、`cd /tmp && rm -rf x` 这类变体不会命中前缀匹配，需要自己补规则。真正的隔离请用容器或虚拟机。
+
 ## 工作原理
 
 三个 agent 都没有内置 system prompt（除了一行说明当前档位），它们的差异**只在 `permission` 字段**。OpenCode 在每次工具调用前用这份配置做一次本地判定：命中 `deny` 的工具会直接从模型可用的工具列表里移除，`ask` 会弹确认，`allow` 直接放行。
@@ -133,16 +160,29 @@ chmod +x install.sh && ./install.sh
 - 在 **OpenCode Desktop 1.19.3（Windows）** 上开发和验证。
 - 只使用公开配置字段（`agent.*.permission`、`default_agent`、`agent.*.disable`），TUI 与桌面版通用。
 - 没有依赖，没有构建步骤，没有可执行代码。
+- CI 在 Ubuntu / macOS / Windows 上校验配置 schema、解析 frontmatter、检查文档链接，并跑一遍安装→重装→卸载的往返测试。
+
+完整的验证矩阵（版本 × 平台 × 形态）、已知的版本敏感点和自查清单见 [`docs/compatibility.md`](docs/compatibility.md)。
 
 ## 已知限制
 
-- 新增/删除 agent 文件需要重启应用（改已有档位的权限不需要）。
+- 新增/删除 agent 文件需要重启应用（改已有档位的权限不需要）。标准操作流见 [`docs/faq.md`](docs/faq.md#新增删除档位为什么要重启)。
 - `read-only` 档禁止 `task`，因此它不能派生子代理；这是刻意的——子代理会继承另一套权限，容易绕过限制。
 - 这是一个「策略」而不是「沙箱」：`full-auto` 档的 `bash: allow` 意味着 agent 能执行任意命令。请只在你信任的环境里使用。
 
 ## 贡献
 
 欢迎提 issue 和 PR。如果你在自己的机器上验证了其他 OpenCode 版本，或者做出了更好用的档位划分，欢迎分享。
+
+改完的配置由 CI 把关：`scripts/validate_config.py`（只用标准库）校验 `permission` 的键与值、`examples/opencode.jsonc` 的可解析性、README 里的相对链接；CI 里还会用真正的 YAML 解析器复查一遍 frontmatter，并跑安装/卸载往返测试。本地也能直接跑：
+
+```bash
+python scripts/validate_config.py
+```
+
+## 变更记录
+
+见 [`CHANGELOG.md`](CHANGELOG.md)。
 
 ## License
 

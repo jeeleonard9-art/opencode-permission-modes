@@ -31,6 +31,19 @@ Windows 上 `Ctrl + Space` 默认是中文输入法的中英切换，会被系�
 4. 重启过应用了吗？（新文件只在启动时扫描）
 5. 检查 YAML 缩进。`permission` 是嵌套对象，用空格不用 Tab。
 
+## 新增/删除档位为什么要重启？
+
+OpenCode 在**启动时**扫描配置目录的 `agent/`，把每个 `.md` 解析成 agent 注册进列表；运行期间不会再扫这个目录。所以：
+
+| 操作 | 要重启吗 |
+| --- | --- |
+| 改已有档位的 `permission` | **不用**，下次工具调用就是新规则 |
+| 改已有档位的 `description` / 提示词正文 | 不用（新会话生效） |
+| 新增一个 `.md`、删掉一个 `.md`、改名 | **要**，否则列表里看不到变化 |
+| 改快捷键、改 `model` | 要 |
+
+**标准操作流**：日常调权限直接改文件，热生效；只有加减档位文件时才重启。右键托盘图标退出再开一次即可。
+
 ## agent 不向我提问，只会自己瞎猜
 
 自定义 agent 的 `question` 权限默认是 `deny`。需要显式写：
@@ -80,8 +93,12 @@ permission:
 
 ## 怎么卸载
 
-删除配置目录 `agent/` 下的那三个 `.md`，重启。如果你改过 `opencode.json`，把 `default_agent` 和 `agent.build/plan.disable` 删掉即可。
+**用脚本**：在仓库目录里跑 `uninstall.ps1`（Windows）或 `./uninstall.sh`（macOS / Linux）。它会按安装时留下的清单把三个 `.md` 还原成你的原始文件（有备份的话）或直接删除，并提示 `default_agent` 是否还指向已删掉的档位。`opencode.json` 它不会动。
+
+**手动**：删除配置目录 `agent/` 下的那三个 `.md`，重启。如果你改过 `opencode.json`，把 `default_agent` 和 `agent.build/plan.disable` 删掉即可。
+
+安装脚本会在配置目录写一个 `.opencode-permission-modes.manifest`（记录装过哪些文件、对应的备份是哪个）。卸载完它会自己删掉，手动删也无害。
 
 ## 支持哪些版本？
 
-在 OpenCode Desktop 1.19.3（Windows）上验证。只用了公开配置字段，TUI 同样适用，但其他版本请自行验证——欢迎提 issue 反馈结果。
+在 OpenCode Desktop 1.19.3（Windows）上验证。只用了公开配置字段，TUI 同样适用，但其他版本请自行验证——完整的验证矩阵和自查清单见 [compatibility.md](compatibility.md)，欢迎提 issue 反馈结果。

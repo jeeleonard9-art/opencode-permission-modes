@@ -2,6 +2,7 @@
 
 > Codex-style permission levels for [OpenCode](https://opencode.ai): **read-only / auto-edit / full-auto**. One keystroke to switch, zero runtime overhead.
 
+[![validate](https://github.com/jeeleonard9-art/opencode-permission-modes/actions/workflows/validate.yml/badge.svg)](https://github.com/jeeleonard9-art/opencode-permission-modes/actions/workflows/validate.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![opencode](https://img.shields.io/badge/OpenCode-1.19.3-000000)](https://opencode.ai)
 [![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
@@ -73,7 +74,21 @@ cd opencode-permission-modes
 chmod +x install.sh && ./install.sh
 ```
 
-The script does two things: copies `agent/*.md` into your config directory (backing up anything it would overwrite as `.bak`), and drops in an example config **only if** you don't have one yet. It never overwrites an existing `opencode.json`.
+The script does two things: copies `agent/*.md` into your config directory (anything that differs is backed up as `.bak`; identical files are skipped), and drops in an example config **only if** you don't have one yet. It never overwrites an existing `opencode.json`. It also writes `.opencode-permission-modes.manifest` next to your config, recording what was installed and which backup belongs to which file — that is what the uninstaller uses.
+
+### Uninstall
+
+```powershell
+# Windows
+powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
+```
+
+```bash
+# macOS / Linux
+./uninstall.sh --yes
+```
+
+It restores the three `.md` files to their pre-install state (or deletes them if there was nothing to back up), never touches `opencode.json`, and warns you if `default_agent` still points at a mode that no longer exists.
 
 ### Manual install
 
@@ -120,6 +135,18 @@ The script does two things: copies `agent/*.md` into your config directory (back
 
 **Pin a mode to a different model**: add `model: provider/model-id` to that file's frontmatter.
 
+**Harden `full-auto`**: `bash: allow` means it can run anything. If you want "everything allowed except the destructive stuff", copy [`presets/hardened-full-auto.md`](presets/hardened-full-auto.md) into your `agent/` directory (you get an extra `hardened-full-auto` mode) or use it to replace `agent/full-auto.md`. It denies:
+
+```yaml
+    "git push --force*": deny
+    "git push -f*": deny
+    "rm -rf*": deny
+    "git reset --hard*": deny
+    "git clean -f*": deny
+```
+
+> This is **glob matching on the command string**, not a sandbox. Variants like `sudo rm -rf` or `cd /tmp && rm -rf x` do not match a prefix pattern; add your own rules if you need them. For real isolation, use a container or a VM.
+
 ## How it works
 
 None of the three agents carries a real system prompt (just one line announcing the mode). Their only difference is the `permission` field. Before each tool call, OpenCode evaluates that config locally: `deny` removes the tool from the model's tool list entirely, `ask` triggers a confirmation, `allow` goes straight through.
@@ -133,16 +160,29 @@ More detail in [`docs/how-it-works.md`](docs/how-it-works.md) and [`docs/faq.md`
 - Developed and verified on **OpenCode Desktop 1.19.3 (Windows)**.
 - Uses only public config fields (`agent.*.permission`, `default_agent`, `agent.*.disable`); works with both the TUI and the desktop app.
 - No dependencies, no build step, no executable code.
+- CI runs on Ubuntu, macOS and Windows: it validates the permission schema, parses the frontmatter, checks documentation links, and exercises an install → reinstall → uninstall round-trip.
+
+The full matrix (version × platform × form), version-sensitive details and a self-check list live in [`docs/compatibility.md`](docs/compatibility.md).
 
 ## Known limitations
 
-- Adding or removing agent files requires an app restart. Editing an existing mode's permissions does not.
+- Adding or removing agent files requires an app restart. Editing an existing mode's permissions does not — see [`docs/faq.md`](docs/faq.md).
 - `read-only` denies `task`, so it cannot spawn subagents. That is deliberate: a subagent brings its own permission set and is an easy way to escape the restriction.
 - This is a *policy*, not a sandbox. `full-auto` with `bash: allow` means the agent can run anything. Only use it in an environment you trust.
 
 ## Contributing
 
 Issues and PRs are welcome. If you verify this on another OpenCode version, or come up with a nicer split, please share it.
+
+CI guards every change: `scripts/validate_config.py` (standard library only) checks the `permission` keys and values, that `examples/opencode.jsonc` parses, and that relative links in this README resolve; CI then re-parses the frontmatter with a real YAML parser and runs the install/uninstall round-trip. Run the same check locally:
+
+```bash
+python scripts/validate_config.py
+```
+
+## Changelog
+
+See [`CHANGELOG.md`](CHANGELOG.md).
 
 ## License
 
